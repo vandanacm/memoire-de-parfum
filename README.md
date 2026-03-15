@@ -1,4 +1,4 @@
-# Mémoire de Parfum 🌸
+# Mémoire de Parfum
 
 > *Where memories become fragrance*
 
@@ -17,7 +17,7 @@ The system uses a hybrid AI pipeline: a fragrance knowledge graph (Neo4j) for st
 ## Architecture Flow
 
 ```
-User UI (Past / Present / Future + questionnaire + optional free text)
+User Chat UI (Past / Present / Future + guided questionnaire + optional free text)
         │
         ▼
 Signal Extraction          app/core/signal_extraction.py
@@ -59,7 +59,7 @@ Guardrails + Logging + Evaluation + Feedback Memory
 
 | Layer | Technology |
 |---|---|
-| Frontend | Streamlit |
+| Frontend | Streamlit (chat-based UI) |
 | Backend API | FastAPI (Python) |
 | AI Orchestration | LangChain |
 | LLM | OpenAI GPT-4o-mini (dev) / Claude 3.5 Sonnet (demo) |
@@ -77,14 +77,13 @@ Guardrails + Logging + Evaluation + Feedback Memory
 ```
 memoire-de-parfum/
 │
-├── .github/workflows/ci.yml          # GitHub Actions CI — lint, test, eval on push
 ├── docker-compose.yml                # Neo4j, Weaviate, Postgres, Redis
 ├── .env.example                      # Template — copy to .env and fill in keys
 ├── requirements.txt
 │
 ├── app/
 │   ├── main.py                       # FastAPI entry point, lifespan, routers
-│   ├── config.py                     # Pydantic Settings — reads from .env
+│   ├── config.py                     # Settings loader — reads from .env
 │   │
 │   ├── api/
 │   │   ├── deps.py                   # JWT auth dependency injection
@@ -102,11 +101,13 @@ memoire-de-parfum/
 │   ├── core/
 │   │   ├── signal_extraction.py      # Step 1 — questionnaire → Scent Intent JSON (LLM)
 │   │   ├── constraint_selector.py    # Step 3 — candidates → Fragrance Blueprint JSON
-│   │   └── llm_synthesis.py          # Step 5 — blueprint + refs → fragrance story (LLM)
+│   │   ├── llm_synthesis.py          # Step 5 — blueprint + refs → fragrance story (LLM)
+│   │   └── retry.py                  # Retry logic with exponential backoff
 │   │
 │   ├── graph/
 │   │   ├── neo4j_client.py           # Neo4j async driver, run_query(), run_write_query()
 │   │   ├── graph_schema.cypher       # Cypher to seed the knowledge graph (run once)
+│   │   ├── seed_graph.py             # Auto-seeds Neo4j at startup if empty
 │   │   └── graph_rag.py              # Step 2 — emotions → note candidates from Neo4j
 │   │
 │   ├── rag/
@@ -134,8 +135,7 @@ memoire-de-parfum/
 │   │   └── user.py                   # Pydantic: UserCreate, SavedBlend, SessionData
 │   │
 │   ├── db/
-│   │   ├── postgres.py               # SQLAlchemy async engine, get_db(), init_db()
-│   │   └── migrations/               # Alembic migrations
+│   │   └── postgres.py               # SQLAlchemy async engine, get_db(), init_db()
 │   │
 │   ├── observability/
 │   │   ├── langsmith_tracer.py       # LangSmith setup — call once at startup
@@ -154,37 +154,29 @@ memoire-de-parfum/
 │   ├── feedback/
 │   │   └── feedback_memory.py        # Stores user actions (save/refine/regenerate) in Redis
 │   │
-│   └── errors/
-│       └── exceptions.py             # Full custom exception hierarchy + fallback messages
+│   ├── errors/
+│   │   └── exceptions.py             # Full custom exception hierarchy + fallback messages
+│   │
+│   └── queue/
+│       └── tasks.py                  # Background task queue
 │
 ├── frontend/
-│   ├── app.py                        # Streamlit entry — hero page, navigation
-│   └── pages/
-│       ├── 01_memory_frame.py        # Step 1 — choose Past / Present / Future
-│       ├── 02_questionnaire.py       # Step 2 — dynamic questionnaire per frame
-│       ├── 03_result.py              # Step 3 — fragrance blueprint + story display
-│       └── 04_refine.py              # Step 4 — refine blend (lighter/stronger/warmer/fresher)
-│
-├── data/
-│   └── safety_docs/                  # (Future) PDFs for Weaviate ingestion
+│   └── app.py                        # Streamlit chat UI — single-page conversational interface
 │
 └── tests/
-    ├── unit/
-    │   ├── test_signal_extraction.py
-    │   ├── test_constraint_selector.py
-    │   ├── test_guardrails.py
-    │   └── test_cache_keys.py
+    ├── eval/
+    │   └── test_eval_runner.py
     ├── integration/
-    │   ├── test_pipeline_past.py
-    │   ├── test_pipeline_present.py
-    │   └── test_pipeline_future.py
-    └── eval/
-        └── test_eval_runner.py
+    │   └── test_pipeline_*.py
+    └── unit/
+        └── test_*.py
 ```
 
 ---
 
 ## Key Design Decisions
+
+**Chat-based UI** — The frontend is a single-page conversational interface (like ChatGPT). The AI guides the user through memory frame selection, questionnaire, and fragrance generation via natural chat bubbles. User inputs appear on the right, AI responses on the left. Supports light/dark mode toggle.
 
 **Hybrid retrieval over pure LLM** — GraphRAG handles structured reasoning (which notes map to which emotions) while Doc RAG handles grounded explanations (safety info, perfumery guidance). The LLM only synthesizes — it never invents facts.
 
@@ -193,8 +185,6 @@ memoire-de-parfum/
 **Guardrails as inline checks** — not a separate service. Safety rules run inside the Constraint Selector; grounding and policy rules run inside LLM Synthesis. Every step is gated.
 
 **Cache before LLM calls** — identical questionnaire inputs return cached results instantly, reducing LLM cost and latency.
-
-**Stubs for teammate modules** — `graph_rag.py` and `doc_rag.py` had working stubs during development so the pipeline could run end-to-end before those modules were complete.
 
 ---
 
@@ -213,19 +203,19 @@ cd memoire-de-parfum
 # Copy env template and fill in your keys
 cp .env.example .env
 
-# Start all services
+# Start all services (Neo4j, Weaviate, Postgres, Redis)
 docker-compose up -d
 
-# Install dependencies
+# Create virtual environment and install dependencies
+python -m venv venv
+source venv/bin/activate        # Windows: venv\Scripts\activate
 pip install -r requirements.txt
-pip install "pydantic[email]"
 
 # Start backend
 uvicorn app.main:app --reload --port 8000
 
-# Start frontend (new terminal)
-cd frontend
-streamlit run app.py
+# Start frontend (new terminal, same venv)
+streamlit run frontend/app.py
 ```
 
 ### Required API Keys
@@ -242,12 +232,12 @@ streamlit run app.py
 ## User Journey
 
 ```
-1. Choose memory frame     Past / Present / Future
-2. Answer questionnaire    5 questions tailored to the frame
-3. Add free text           Optional memory description
-4. Receive blueprint       Top / Heart / Base notes + fragrance story
-5. Refine                  Lighter / Stronger / Warmer / Fresher
-6. Save                    Store to personal scent memory profile
+1. Choose memory frame     Chat prompt: Past / Present / Future (buttons or typed)
+2. Answer questionnaire    5 guided questions via chat bubbles with suggestion chips
+3. Add free text           Optional — share extra details or skip
+4. Receive blueprint       Top / Heart / Base notes + fragrance story card
+5. Refine                  Lighter / Stronger / Warmer / Fresher via chat
+6. Save or start over      Save blend or begin a new creation
 ```
 
 ---
