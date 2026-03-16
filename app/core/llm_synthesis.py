@@ -1,6 +1,6 @@
 import json
 from langchain_openai import ChatOpenAI
-from langchain.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate
 from langsmith import traceable
 from tenacity import retry, stop_after_attempt, wait_exponential
 

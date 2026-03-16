@@ -238,6 +238,14 @@ st.set_page_config(
 
 # ─── Session State ────────────────────────────────────────────────────────────
 
+FRAGRANCE_THEMES = [
+    ("default", "Default"),
+    ("rose", "Rose"),
+    ("sandalwood", "Sandalwood"),
+    ("musk", "Musk"),
+    ("citrus", "Citrus"),
+]
+
 _DEFAULTS = {
     "messages": [],
     "phase": "greeting",
@@ -253,6 +261,7 @@ _DEFAULTS = {
     "_multi_selected": [],
     "_pending_refinement": None,
     "dark_mode": True,
+    "fragrance_theme": "default",
 }
 for _k, _v in _DEFAULTS.items():
     if _k not in st.session_state:
@@ -263,55 +272,219 @@ for _k, _v in _DEFAULTS.items():
 
 _dark = st.session_state.dark_mode
 
+# Base palettes: cohesive card/bubble + premium shadows
 _LIGHT = """
     --bg: #ffffff;
-    --bg-alt: #f0f0f0;
-    --bg-card: #f5f5f5;
-    --bg-note: #fafafa;
-    --bg-input: #f4f4f4;
-    --text: #111111;
-    --text-secondary: #555555;
-    --text-muted: #999999;
-    --border: #e0e0e0;
-    --border-strong: #cccccc;
-    --accent: #8b6f47;
-    --dot: #999999;
-    --shadow: 0 1px 3px rgba(0,0,0,0.06);
-    --user-bubble: #111111;
+    --bg-alt: #f8f8f8;
+    --bg-card: #f8f8f8;
+    --bg-note: #fcfcfc;
+    --bg-input: #f5f5f5;
+    --text: #1a1a1a;
+    --text-secondary: #4a4a4a;
+    --text-muted: #888888;
+    --border: #e5e5e5;
+    --border-strong: #d0d0d0;
+    --accent: #7d5e3a;
+    --accent-soft: rgba(125, 94, 58, 0.12);
+    --dot: #888888;
+    --shadow: 0 2px 8px rgba(0,0,0,0.06);
+    --shadow-card: 0 2px 12px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+    --shadow-input: 0 1px 4px rgba(0,0,0,0.05);
+    --user-bubble: #1a1a1a;
     --user-text: #ffffff;
-    --ai-bubble: #f0f0f0;
-    --ai-text: #111111;
-    --btn-bg: #f4f4f4;
-    --btn-text: #111111;
-    --btn-border: #d0d0d0;
-    --btn-hover-bg: #111111;
+    --ai-bubble: #f5f5f5;
+    --ai-text: #1a1a1a;
+    --btn-bg: #f5f5f5;
+    --btn-text: #1a1a1a;
+    --btn-border: #e0e0e0;
+    --btn-hover-bg: #1a1a1a;
     --btn-hover-text: #ffffff;
 """
 
 _DARK = """
-    --bg: #1a1a1a;
-    --bg-alt: #262626;
-    --bg-card: #262626;
-    --bg-note: #2e2e2e;
-    --bg-input: #262626;
-    --text: #e8e8e8;
-    --text-secondary: #aaaaaa;
-    --text-muted: #777777;
+    --bg: #141414;
+    --bg-alt: #1e1e1e;
+    --bg-card: #1e1e1e;
+    --bg-note: #252525;
+    --bg-input: #252525;
+    --text: #f0f0f0;
+    --text-secondary: #b8b8b8;
+    --text-muted: #808080;
     --border: #333333;
-    --border-strong: #444444;
-    --accent: #c4a06a;
-    --dot: #777777;
-    --shadow: 0 1px 3px rgba(0,0,0,0.3);
-    --user-bubble: #c4a06a;
-    --user-text: #111111;
-    --ai-bubble: #262626;
-    --ai-text: #e8e8e8;
-    --btn-bg: #2e2e2e;
-    --btn-text: #e8e8e8;
-    --btn-border: #444444;
+    --border-strong: #454545;
+    --accent: #c9a86c;
+    --accent-soft: rgba(201, 168, 108, 0.18);
+    --dot: #808080;
+    --shadow: 0 2px 8px rgba(0,0,0,0.25);
+    --shadow-card: 0 4px 16px rgba(0,0,0,0.3), 0 1px 3px rgba(0,0,0,0.2);
+    --shadow-input: 0 2px 8px rgba(0,0,0,0.2);
+    --user-bubble: #c9a86c;
+    --user-text: #141414;
+    --ai-bubble: #252525;
+    --ai-text: #f0f0f0;
+    --btn-bg: #2a2a2a;
+    --btn-text: #f0f0f0;
+    --btn-border: #404040;
     --btn-hover-bg: #e8e8e8;
-    --btn-hover-text: #1a1a1a;
+    --btn-hover-text: #141414;
 """
+
+# Fragrance theme overrides: premium palettes with depth and richness
+_THEME_OVERRIDES = {
+    "default": {},
+    "rose": {
+        "light": """
+    --accent: #9e3d4d;
+    --accent-soft: rgba(158, 61, 77, 0.12);
+    --bg: #fff8f9;
+    --bg-alt: #fef2f4;
+    --bg-card: #fef2f4;
+    --bg-note: #fdf6f7;
+    --bg-input: #fcecef;
+    --ai-bubble: #fef2f4;
+    --user-bubble: #8b2d3d;
+    --border: #f5d8dc;
+    --shadow: 0 2px 10px rgba(158, 61, 77, 0.08);
+    --shadow-card: 0 4px 16px rgba(158, 61, 77, 0.08), 0 1px 4px rgba(0,0,0,0.04);
+    --shadow-input: 0 1px 4px rgba(158, 61, 77, 0.06);
+    --btn-hover-bg: #8b2d3d;
+""",
+        "dark": """
+    --accent: #e8a0ac;
+    --accent-soft: rgba(232, 160, 172, 0.15);
+    --bg: #1a1214;
+    --bg-alt: #261a1d;
+    --bg-card: #261a1d;
+    --bg-note: #2e2124;
+    --bg-input: #261a1d;
+    --ai-bubble: #261a1d;
+    --ai-text: #f5e8ea;
+    --user-bubble: #c96878;
+    --user-text: #1a1214;
+    --border: #4a3539;
+    --text-secondary: #d8bcc2;
+    --shadow: 0 4px 16px rgba(0,0,0,0.35);
+    --shadow-card: 0 6px 20px rgba(0,0,0,0.4), 0 2px 6px rgba(232,160,172,0.06);
+    --shadow-input: 0 2px 10px rgba(0,0,0,0.25);
+    --btn-hover-bg: #e8a0ac;
+    --btn-hover-text: #1a1214;
+""",
+    },
+    "sandalwood": {
+        "light": """
+    --accent: #7a5a0f;
+    --accent-soft: rgba(122, 90, 15, 0.12);
+    --bg: #faf6ef;
+    --bg-alt: #f5efe2;
+    --bg-card: #f5efe2;
+    --bg-note: #faf8f2;
+    --bg-input: #ebe3d4;
+    --ai-bubble: #f5efe2;
+    --user-bubble: #5c4309;
+    --border: #e5d9c4;
+    --shadow: 0 2px 10px rgba(122, 90, 15, 0.06);
+    --shadow-card: 0 4px 16px rgba(122, 90, 15, 0.08), 0 1px 4px rgba(0,0,0,0.04);
+    --shadow-input: 0 1px 4px rgba(122, 90, 15, 0.05);
+    --btn-hover-bg: #5c4309;
+""",
+        "dark": """
+    --accent: #d4a82a;
+    --accent-soft: rgba(212, 168, 42, 0.14);
+    --bg: #181510;
+    --bg-alt: #231d16;
+    --bg-card: #231d16;
+    --bg-note: #2c251c;
+    --bg-input: #231d16;
+    --ai-bubble: #231d16;
+    --ai-text: #f2ebe0;
+    --user-bubble: #a68218;
+    --user-text: #181510;
+    --border: #4a4030;
+    --text-secondary: #d8ccb0;
+    --shadow: 0 4px 16px rgba(0,0,0,0.4);
+    --shadow-card: 0 6px 20px rgba(0,0,0,0.45), 0 2px 6px rgba(212,168,42,0.05);
+    --shadow-input: 0 2px 10px rgba(0,0,0,0.3);
+    --btn-hover-bg: #d4a82a;
+    --btn-hover-text: #181510;
+""",
+    },
+    "musk": {
+        "light": """
+    --accent: #5c4838;
+    --accent-soft: rgba(92, 72, 56, 0.1);
+    --bg: #f6f4f1;
+    --bg-alt: #ede8e2;
+    --bg-card: #ede8e2;
+    --bg-note: #f4f0eb;
+    --bg-input: #e4ddd4;
+    --ai-bubble: #ede8e2;
+    --user-bubble: #3d3026;
+    --border: #d8cfc4;
+    --shadow: 0 2px 10px rgba(92, 72, 56, 0.06);
+    --shadow-card: 0 4px 16px rgba(92, 72, 56, 0.07), 0 1px 4px rgba(0,0,0,0.04);
+    --shadow-input: 0 1px 4px rgba(92, 72, 56, 0.05);
+    --btn-hover-bg: #3d3026;
+""",
+        "dark": """
+    --accent: #c4a078;
+    --accent-soft: rgba(196, 160, 120, 0.12);
+    --bg: #161412;
+    --bg-alt: #201c1a;
+    --bg-card: #201c1a;
+    --bg-note: #282420;
+    --bg-input: #201c1a;
+    --ai-bubble: #201c1a;
+    --ai-text: #ede8e2;
+    --user-bubble: #8b7355;
+    --user-text: #161412;
+    --border: #403830;
+    --text-secondary: #d0c4b4;
+    --shadow: 0 4px 16px rgba(0,0,0,0.4);
+    --shadow-card: 0 6px 20px rgba(0,0,0,0.45), 0 2px 6px rgba(196,160,120,0.04);
+    --shadow-input: 0 2px 10px rgba(0,0,0,0.3);
+    --btn-hover-bg: #c4a078;
+    --btn-hover-text: #161412;
+""",
+    },
+    "citrus": {
+        "light": """
+    --accent: #5c8a1e;
+    --accent-soft: rgba(92, 138, 30, 0.12);
+    --bg: #f8fcf5;
+    --bg-alt: #eef8e8;
+    --bg-card: #eef8e8;
+    --bg-note: #f4faf0;
+    --bg-input: #e0f0d8;
+    --ai-bubble: #eef8e8;
+    --user-bubble: #426018;
+    --border: #d0e4c4;
+    --shadow: 0 2px 10px rgba(92, 138, 30, 0.07);
+    --shadow-card: 0 4px 16px rgba(92, 138, 30, 0.08), 0 1px 4px rgba(0,0,0,0.04);
+    --shadow-input: 0 1px 4px rgba(92, 138, 30, 0.06);
+    --btn-hover-bg: #426018;
+""",
+        "dark": """
+    --accent: #98c848;
+    --accent-soft: rgba(152, 200, 72, 0.12);
+    --bg: #121810;
+    --bg-alt: #1a2214;
+    --bg-card: #1a2214;
+    --bg-note: #222c18;
+    --bg-input: #1a2214;
+    --ai-bubble: #1a2214;
+    --ai-text: #e8f0dc;
+    --user-bubble: #6a9028;
+    --user-text: #121810;
+    --border: #364830;
+    --text-secondary: #c0d4a8;
+    --shadow: 0 4px 16px rgba(0,0,0,0.4);
+    --shadow-card: 0 6px 20px rgba(0,0,0,0.45), 0 2px 6px rgba(152,200,72,0.05);
+    --shadow-input: 0 2px 10px rgba(0,0,0,0.3);
+    --btn-hover-bg: #98c848;
+    --btn-hover-text: #121810;
+""",
+    },
+}
 
 _AI_SVG = (
     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
@@ -325,16 +498,23 @@ _USER_SVG = (
     '7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>'
 )
 
+# Build :root CSS vars: base (light/dark) + fragrance theme overrides
+_root_base = _DARK if _dark else _LIGHT
+_theme = st.session_state.get("fragrance_theme", "default")
+_theme_extra = _THEME_OVERRIDES.get(_theme, {}).get("dark" if _dark else "light", "")
+_root_vars = _root_base + (_theme_extra if isinstance(_theme_extra, str) else "")
+
 st.markdown(
     f"""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-:root {{ {_DARK if _dark else _LIGHT} }}
+:root {{ {_root_vars} }}
 
 /* ── Reset ─────────────────────────────────────────────── */
 *, *::before, *::after {{ box-sizing: border-box; }}
 
+html {{ font-size: clamp(14px, 2vw, 16px); }}
 html, body, [class*="css"],
 p, li, span, label, div, input, textarea, button {{
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
@@ -344,6 +524,20 @@ h1, h2, h3, h4 {{
     font-family: 'Inter', -apple-system, sans-serif !important;
     font-weight: 600 !important;
     color: var(--text) !important;
+}}
+
+/* ── Responsive container ──────────────────────────────── */
+.block-container {{
+    max-width: min(720px, 100vw - 2rem) !important;
+    padding: 1rem clamp(0.75rem, 4vw, 1.5rem) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}}
+@media (max-width: 640px) {{
+    .block-container {{ padding: 0.75rem 1rem !important; }}
+}}
+@media (max-width: 380px) {{
+    .block-container {{ padding: 0.5rem 0.75rem !important; }}
 }}
 
 /* ── Hide Streamlit chrome ─────────────────────────────── */
@@ -356,7 +550,7 @@ h1, h2, h3, h4 {{
 }}
 
 /* ── Full-page background ──────────────────────────────── */
-html, body {{ background-color: var(--bg) !important; }}
+html, body {{ background-color: var(--bg) !important; min-height: 100vh; }}
 
 .stApp, .stApp > *,
 [data-testid="stAppViewContainer"],
@@ -370,7 +564,7 @@ section[data-testid="stMain"] > div {{
     color: var(--text) !important;
 }}
 
-/* ── Bottom bar ────────────────────────────────────────── */
+/* ── Bottom bar (match page background) ────────────────── */
 [data-testid="stBottom"],
 [data-testid="stBottom"] > *,
 [data-testid="stBottomBlockContainer"],
@@ -383,33 +577,46 @@ section[data-testid="stMain"] > div {{
     box-shadow: none !important;
 }}
 
-/* ── Chat input: outer wrapper transparent ─────────────── */
-[data-testid="stChatInput"] {{
-    background: transparent !important;
-    background-color: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    outline: none !important;
+/* ── Chat input: single layer (no stacked borders/shadows) ─ */
+[data-testid="stChatInput"],
+[data-testid="stChatInput"] *,
+[data-testid="stChatInput"] *::before,
+[data-testid="stChatInput"] *::after {{
+    box-sizing: border-box !important;
 }}
 
-/* ── Chat input: inner styled box ──────────────────────── */
+[data-testid="stChatInput"] {{
+    background: var(--bg) !important;
+    background-color: var(--bg) !important;
+    border: none !important;
+    box-shadow: none !important;
+}}
+
+/* Only the outer wrapper is the visible box — one border, one shadow */
 [data-testid="stChatInput"] > div {{
     background: var(--bg-input) !important;
     background-color: var(--bg-input) !important;
     border: 1px solid var(--border) !important;
     border-radius: 24px !important;
-    box-shadow: none !important;
+    box-shadow: var(--shadow-input) !important;
     outline: none !important;
 }}
 
-[data-testid="stChatInput"] > div > div {{
+/* Inner elements: no extra layers — transparent, no border, no shadow */
+[data-testid="stChatInput"] > div > div,
+[data-testid="stChatInput"] > div *,
+[data-testid="stChatInput"] div div,
+[data-testid="stChatInput"] form,
+[data-testid="stChatInput"] section {{
     background: transparent !important;
     background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
 }}
 
 [data-testid="stChatInput"] textarea {{
     color: var(--text) !important;
-    caret-color: var(--text) !important;
+    caret-color: var(--accent) !important;
     background: transparent !important;
     background-color: transparent !important;
 }}
@@ -423,7 +630,7 @@ section[data-testid="stMain"] > div {{
     background: transparent !important;
 }}
 [data-testid="stChatInput"] button:hover {{
-    color: var(--text) !important;
+    color: var(--accent) !important;
 }}
 
 /* ── Hide default st.chat_message (only used for typing) ─ */
@@ -450,17 +657,15 @@ section[data-testid="stMain"] > div {{
     align-items: flex-start;
     padding: 0 4px;
 }}
-.ai-row {{
-    justify-content: flex-start;
-}}
-.user-row {{
-    justify-content: flex-end;
-}}
+.ai-row {{ justify-content: flex-start; }}
+.user-row {{ justify-content: flex-end; }}
 
 /* ── Avatars ───────────────────────────────────────────── */
 .av {{
     width: 30px;
     height: 30px;
+    min-width: 30px;
+    min-height: 30px;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -468,16 +673,10 @@ section[data-testid="stMain"] > div {{
     flex-shrink: 0;
     margin-top: 2px;
 }}
-.av-ai {{
-    background: var(--accent);
-    color: #ffffff;
-}}
-.av-user {{
-    background: var(--user-bubble);
-    color: var(--user-text);
-}}
+.av-ai {{ background: var(--accent); color: #ffffff; }}
+.av-user {{ background: var(--user-bubble); color: var(--user-text); }}
 
-/* ── Bubbles ───────────────────────────────────────────── */
+/* ── Bubbles (premium card-style with shadow) ───────────── */
 .bubble {{
     padding: 10px 16px;
     border-radius: 20px;
@@ -485,42 +684,45 @@ section[data-testid="stMain"] > div {{
     line-height: 1.65;
     word-wrap: break-word;
     overflow-wrap: break-word;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
 }}
 .ai-bubble {{
     background: var(--ai-bubble);
     color: var(--ai-text);
     border-bottom-left-radius: 6px;
-    max-width: 82%;
+    max-width: min(82%, 95vw);
+    box-shadow: var(--shadow-card);
 }}
 .ai-bubble p, .ai-bubble span, .ai-bubble li,
 .ai-bubble strong, .ai-bubble em, .ai-bubble b, .ai-bubble i,
-.ai-bubble a, .ai-bubble div {{
-    color: var(--ai-text) !important;
-}}
-.ai-bubble em, .ai-bubble i {{
-    color: var(--text-secondary) !important;
-}}
-.ai-bubble a {{
-    color: var(--accent) !important;
-}}
+.ai-bubble a, .ai-bubble div {{ color: var(--ai-text) !important; }}
+.ai-bubble em, .ai-bubble i {{ color: var(--text-secondary) !important; }}
+.ai-bubble a {{ color: var(--accent) !important; }}
 
 .user-bubble {{
     background: var(--user-bubble);
     color: var(--user-text);
     border-bottom-right-radius: 6px;
-    max-width: 70%;
+    max-width: min(70%, 95vw);
+    border-color: var(--user-bubble);
+    box-shadow: var(--shadow);
 }}
-.user-bubble, .user-bubble * {{
-    color: var(--user-text) !important;
+.user-bubble, .user-bubble * {{ color: var(--user-text) !important; }}
+
+@media (max-width: 480px) {{
+    .ai-bubble, .user-bubble {{ max-width: 92%; }}
+    .bubble {{ padding: 8px 14px; font-size: 0.85rem; }}
 }}
 
-/* ── Fragrance result card ─────────────────────────────── */
+/* ── Fragrance result card (premium depth) ──────────────── */
 .fragrance-card {{
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 12px;
+    border-radius: 14px;
     padding: 1.5rem;
     margin: 4px 0;
+    box-shadow: var(--shadow-card);
 }}
 .fragrance-story {{
     font-size: 0.88rem;
@@ -545,9 +747,8 @@ section[data-testid="stMain"] > div {{
     gap: 1rem;
     margin: 1rem 0;
 }}
-@media (max-width: 640px) {{
-    .notes-grid {{ grid-template-columns: 1fr; }}
-}}
+@media (max-width: 640px) {{ .notes-grid {{ grid-template-columns: 1fr; }} }}
+@media (max-width: 380px) {{ .notes-grid {{ gap: 0.75rem; }} }}
 .note-column h4 {{
     font-size: 0.8rem !important;
     font-weight: 600 !important;
@@ -568,21 +769,9 @@ section[data-testid="stMain"] > div {{
     padding: 0.4rem 0.6rem;
     margin-bottom: 0.3rem;
 }}
-.note-name {{
-    font-weight: 500;
-    color: var(--text) !important;
-    font-size: 0.78rem;
-}}
-.note-detail {{
-    font-size: 0.66rem;
-    color: var(--text-muted) !important;
-    margin-top: 0.08rem;
-}}
-.note-sub {{
-    font-size: 0.62rem;
-    color: var(--text-muted) !important;
-    font-style: italic;
-}}
+.note-name {{ font-weight: 500; color: var(--text) !important; font-size: 0.78rem; }}
+.note-detail {{ font-size: 0.66rem; color: var(--text-muted) !important; margin-top: 0.08rem; }}
+.note-sub {{ font-size: 0.62rem; color: var(--text-muted) !important; font-style: italic; }}
 .details-row {{
     display: flex;
     justify-content: space-around;
@@ -591,6 +780,7 @@ section[data-testid="stMain"] > div {{
     border-top: 1px solid var(--border);
     border-bottom: 1px solid var(--border);
 }}
+@media (max-width: 480px) {{ .details-row {{ flex-wrap: wrap; gap: 0.5rem; }} }}
 .detail {{ text-align: center; }}
 .detail-label {{
     display: block;
@@ -626,11 +816,7 @@ section[data-testid="stMain"] > div {{
     gap: 8px;
     padding: 2px 0;
 }}
-.typing-label {{
-    font-size: 0.82rem;
-    color: var(--text-muted) !important;
-    font-style: italic;
-}}
+.typing-label {{ font-size: 0.82rem; color: var(--text-muted) !important; font-style: italic; }}
 .typing-dots {{
     display: flex;
     align-items: center;
@@ -647,24 +833,26 @@ section[data-testid="stMain"] > div {{
 .typing-dots span:nth-child(2) {{ animation-delay: 0.2s; }}
 .typing-dots span:nth-child(3) {{ animation-delay: 0.4s; }}
 
-/* ── Suggestion buttons ────────────────────────────────── */
+/* ── Suggestion buttons (premium) ──────────────────────── */
 .stButton > button {{
     border-radius: 20px !important;
-    padding: 0.4rem 1rem !important;
+    padding: 0.5rem 1rem !important;
+    min-height: 2.5rem;
     font-family: 'Inter', sans-serif !important;
     font-size: 0.78rem !important;
-    font-weight: 400 !important;
-    letter-spacing: 0 !important;
-    transition: all 0.15s ease !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.02em !important;
+    transition: all 0.2s ease !important;
     border: 1px solid var(--btn-border) !important;
     background: var(--btn-bg) !important;
     color: var(--btn-text) !important;
-    box-shadow: none !important;
+    box-shadow: var(--shadow-input) !important;
 }}
 .stButton > button:hover {{
     background: var(--btn-hover-bg) !important;
     color: var(--btn-hover-text) !important;
     border-color: var(--btn-hover-bg) !important;
+    box-shadow: var(--shadow) !important;
 }}
 .stButton > button:active,
 .stButton > button:focus {{
@@ -673,29 +861,40 @@ section[data-testid="stMain"] > div {{
     border-color: var(--btn-hover-bg) !important;
 }}
 
-/* ── Header ────────────────────────────────────────────── */
+/* ── Header: title + subtitle on two lines ─────────────── */
 .hdr {{
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
     padding: 0.6rem 0 0.5rem 0;
     border-bottom: 1px solid var(--border);
     margin-bottom: 0.8rem;
 }}
 .hdr-left {{
     display: flex;
-    align-items: baseline;
-    gap: 8px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.15rem;
 }}
 .hdr-title {{
-    font-size: 0.95rem;
-    font-weight: 600;
+    font-size: clamp(1.35rem, 4vw, 1.75rem);
+    font-weight: 700;
     color: var(--text);
+    line-height: 1.2;
+    letter-spacing: -0.02em;
 }}
 .hdr-sub {{
-    font-size: 0.68rem;
+    font-size: 0.8rem;
     color: var(--text-muted);
     font-weight: 400;
+    display: block;
+}}
+@media (max-width: 480px) {{
+    .hdr {{ padding: 0.5rem 0; }}
+    .hdr-title {{ font-size: 1.25rem; }}
+    .hdr-sub {{ font-size: 0.75rem; }}
 }}
 
 /* ── Separator before suggestions ──────────────────────── */
@@ -706,9 +905,7 @@ section[data-testid="stMain"] > div {{
 }}
 
 /* ── Markdown defaults ─────────────────────────────────── */
-.stMarkdown, .stMarkdown p, .stMarkdown span {{
-    color: var(--text) !important;
-}}
+.stMarkdown, .stMarkdown p, .stMarkdown span {{ color: var(--text) !important; }}
 
 /* ── Scrollbar ─────────────────────────────────────────── */
 ::-webkit-scrollbar {{ width: 5px; }}
@@ -890,9 +1087,11 @@ def render_typing(label_html: str):
 
 def reset_conversation():
     preserve_dark = st.session_state.dark_mode
+    preserve_theme = st.session_state.get("fragrance_theme", "default")
     for k, v in _DEFAULTS.items():
         st.session_state[k] = v.copy() if isinstance(v, (list, dict)) else v
     st.session_state.dark_mode = preserve_dark
+    st.session_state.fragrance_theme = preserve_theme
     add_msg("assistant", WELCOME_MESSAGE)
 
 
@@ -1086,7 +1285,7 @@ def _on_theme_toggle():
 
 # ─── Header ──────────────────────────────────────────────────────────────────
 
-_hcol1, _hcol2 = st.columns([8, 1])
+_hcol1, _hcol2, _hcol3 = st.columns([6, 2, 1])
 with _hcol1:
     st.markdown(
         '<div class="hdr-left">'
@@ -1096,6 +1295,22 @@ with _hcol1:
         unsafe_allow_html=True,
     )
 with _hcol2:
+    _theme_idx = next(
+        (i for i, (k, _) in enumerate(FRAGRANCE_THEMES) if k == st.session_state.fragrance_theme),
+        0,
+    )
+    _sel = st.selectbox(
+        "Theme",
+        options=[lbl for _, lbl in FRAGRANCE_THEMES],
+        index=_theme_idx,
+        key="fragrance_theme_select",
+        label_visibility="collapsed",
+    )
+    _key = next(k for k, lbl in FRAGRANCE_THEMES if lbl == _sel)
+    if _key != st.session_state.fragrance_theme:
+        st.session_state.fragrance_theme = _key
+        st.rerun()
+with _hcol3:
     _icon = "\u2600\ufe0f" if _dark else "\U0001f319"
     st.button(_icon, key="theme_toggle", on_click=_on_theme_toggle)
 
